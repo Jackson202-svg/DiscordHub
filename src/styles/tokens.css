@@ -1,0 +1,22 @@
+:root {
+  color-scheme: dark;
+  --dh-bg: #0b0e18;
+  --dh-surface: #111726;
+  --dh-surface-raised: #171f33;
+  --dh-border: #29314a;
+  --dh-text: #f3f4ff;
+  --dh-muted: #9ca6c1;
+  --dh-accent: #8c91ff;
+  --dh-success: #8ee4bc;
+  --dh-warning: #ffd28a;
+  --dh-danger: #ffb6c1;
+  --dh-radius-sm: 8px;
+  --dh-radius-md: 12px;
+  --dh-radius-lg: 16px;
+  --dh-space-1: 4px;
+  --dh-space-2: 8px;
+  --dh-space-3: 12px;
+  --dh-space-4: 16px;
+  --dh-space-6: 24px;
+  --dh-space-8: 32px;
+}
