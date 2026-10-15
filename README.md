@@ -2,7 +2,7 @@
 
 DiscordHub is a community-discovery starter that brings public GitHub repository search, Google Custom Search (when configured), and Discord invite lookup into one responsive web app.
 
-> This is an extensible starter project, not a finished production service. Database persistence, user accounts, saved items, AI features, and a full Discord server search are not implemented yet.
+> This is an extensible starter project, not a finished production service. Saved results and search history are stored only in the browser; server-side database persistence, user accounts, AI features, and a full Discord server search are not implemented yet.
 
 ## What works now
 
@@ -11,7 +11,8 @@ DiscordHub is a community-discovery starter that brings public GitHub repository
 - GitHub public repository search via the official GitHub API
 - Optional Google Custom Search JSON API adapter
 - Discord invite lookup for a supplied invite code
-- Input validation, provider request timeouts, safe DOM text rendering, and basic security headers
+- Input validation, provider request timeouts, safe DOM text rendering, basic security headers, and configurable in-memory API rate limiting
+- Browser-local saved results, recent search history, and JSON export
 - Automated validation tests with Node's built-in test runner
 - Separate PHP admin starter dashboard in `webapp/`
 
@@ -82,7 +83,7 @@ DiscordHub/
    npm test
    ```
 
-The app uses Node built-in modules, so no third-party npm dependencies are required by the current starter.
+The app uses Node built-in modules, so no third-party npm dependencies are required by the current starter. A small `.env` loader reads local configuration without overriding environment variables already set by the host.
 
 ## Search providers
 
@@ -113,7 +114,7 @@ GitHub Pages and other static-only hosts cannot execute PHP or run this Node API
 
 ## Security and production readiness
 
-Before public deployment, add shared/IP-based rate limiting, structured logging, production hosting configuration, stronger origin policy if cross-origin access is needed, automated dependency/security checks, and a reviewed authentication/authorization model before adding private user data or administrative API routes. The database schema is only a starting point; persistence is not yet connected to the app.
+The starter includes basic in-memory rate limiting, but it resets on restart and is not shared between server instances. Before public deployment, add a shared rate-limit store, structured logging, production hosting configuration, a reviewed origin policy, automated dependency/security checks, and a reviewed authentication/authorization model before adding private user data or administrative API routes. The database schema is only a starting point; persistence is not yet connected to the app.
 
 ## License
 
