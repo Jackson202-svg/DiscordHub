@@ -12,6 +12,7 @@
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
     "test": "node --test",
-    "check:env": "node scripts/check-env.js"
+    "check:env": "node scripts/check-env.js",
+    "doctor": "node scripts/doctor.js"
   }
 }
