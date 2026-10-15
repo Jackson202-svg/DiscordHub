@@ -28,7 +28,7 @@ function csrfFor(req,s){if(!verifyCsrf(req,s))throw Object.assign(Error("CSRF re
 function adminFor(s){if(s.user.role!=="admin")throw Object.assign(Error("Admin required"),{statusCode:403,publicMessage:"Administrator access is required."});}
 function favoriteFrom(b){const provider=b.provider,title=typeof b.title==="string"?b.title.trim():"",description=typeof b.description==="string"?b.description.trim():"",url=safeExternalUrl(b.url);if(!["github","google","discord"].includes(provider)||!title||title.length>300||description.length>5000||!url)throw Object.assign(Error("Invalid favorite"),{statusCode:400,publicMessage:"Provide a supported provider, title, public HTTP/HTTPS URL, and description under 5,000 characters."});return {provider,title,description,url};}
 const server=createServer(async(req,res)=>{
- if(req.headers.origin){sendJson(res,403,{error:"Cross-origin requests are not supported."});return;}
+ if(req.headers.origin){let originValue;try{originValue=new URL(req.headers.origin).origin;}catch{sendJson(res,403,{error:"Invalid request origin."});return;}const expectedOrigin=(secure(req)?"https":"http")+"://"+String(req.headers.host||"");if(originValue!==expectedOrigin){sendJson(res,403,{error:"Cross-origin requests are not supported."});return;}}
  let url;try{url=new URL(req.url,"http://localhost");}catch{sendJson(res,400,{error:"Invalid URL."});return;}
  if(url.pathname.startsWith("/api/")){
   const limit=limiter(req.socket.remoteAddress||"unknown"),headers={"x-ratelimit-limit":String(limit.limit),"x-ratelimit-remaining":String(limit.remaining),"x-ratelimit-reset":String(Math.ceil(limit.resetAt/1000))};
