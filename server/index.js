@@ -7,14 +7,16 @@ import { searchGoogle } from "../google/client.js";
 import { getDiscordInvite } from "../discord/client.js";
 import { validateSearchQuery, validateInviteCode } from "../src/utils/validation.js";
 import { config } from "./config.js";
+import { createRateLimiter } from "./rate-limit.js";
 
 const root = resolve(fileURLToPath(new URL("../public/", import.meta.url)));
-const types = { ".html":"text/html; charset=utf-8", ".css":"text/css; charset=utf-8", ".js":"text/javascript; charset=utf-8", ".svg":"image/svg+xml", ".png":"image/png", ".ico":"image/x-icon" };
-const sendJson = (res, status, payload) => { res.writeHead(status, { "content-type":"application/json; charset=utf-8", "cache-control":"no-store", "x-content-type-options":"nosniff" }); res.end(JSON.stringify(payload)); };
+const types = { ".html":"text/html; charset=utf-8", ".css":"text/css; charset=utf-8", ".js":"text/javascript; charset=utf-8", ".svg":"image/svg+xml", ".png":"image/png", ".ico":"image/x-icon", ".webmanifest":"application/manifest+json; charset=utf-8", ".txt":"text/plain; charset=utf-8" };
+const sendJson = (res, status, payload, extraHeaders = {}) => { res.writeHead(status, { "content-type":"application/json; charset=utf-8", "cache-control":"no-store", "x-content-type-options":"nosniff", ...extraHeaders }); res.end(JSON.stringify(payload)); };
 const errorStatus = error => {
   if (Number.isInteger(error?.statusCode) && [400,401,403,404,429,503].includes(error.statusCode)) return error.statusCode;
   return 502;
 };
+const rateLimit = createRateLimiter({ windowMs: config.rateLimitWindowMs, max: config.rateLimitMax });
 
 const server = createServer(async (req, res) => {
   const origin = req.headers.origin;
@@ -24,13 +26,25 @@ const server = createServer(async (req, res) => {
   if (req.method !== "GET" && req.method !== "HEAD") { sendJson(res,405,{error:"Method not allowed."}); return; }
   if (url.pathname === "/api/health") { sendJson(res,200,{status:"ok",app:"DiscordHub",version:"0.2.0",providers:{github:true,google:Boolean(config.googleKey&&config.googleEngineId),discordInvite:true}}); return; }
   if (url.pathname.startsWith("/api/")) {
+    // Uses the direct socket peer. Forwarded IP headers are intentionally not trusted by default.
+    const peer = req.socket.remoteAddress || "unknown";
+    const limit = rateLimit(peer);
+    const limitHeaders = {
+      "x-ratelimit-limit": String(limit.limit),
+      "x-ratelimit-remaining": String(limit.remaining),
+      "x-ratelimit-reset": String(Math.ceil(limit.resetAt / 1000))
+    };
+    if (!limit.allowed) {
+      sendJson(res,429,{error:"Too many API requests. Wait a moment and try again."},{...limitHeaders,"retry-after":String(Math.max(1,Math.ceil((limit.resetAt-Date.now())/1000)))});
+      return;
+    }
     try {
-      if (url.pathname === "/api/github/search") { const q=validateSearchQuery(url.searchParams.get("q")); sendJson(res,200,await searchGitHub(q)); return; }
-      if (url.pathname === "/api/google/search") { const q=validateSearchQuery(url.searchParams.get("q")); sendJson(res,200,await searchGoogle(q)); return; }
+      if (url.pathname === "/api/github/search") { const q=validateSearchQuery(url.searchParams.get("q")); sendJson(res,200,await searchGitHub(q),limitHeaders); return; }
+      if (url.pathname === "/api/google/search") { const q=validateSearchQuery(url.searchParams.get("q")); sendJson(res,200,await searchGoogle(q),limitHeaders); return; }
       const inviteMatch=url.pathname.match(/^\/api\/discord\/invite\/([A-Za-z0-9-]{2,64})$/);
-      if (inviteMatch) { const code=validateInviteCode(inviteMatch[1]); sendJson(res,200,await getDiscordInvite(code)); return; }
-      sendJson(res,404,{error:"API route not found."});
-    } catch (error) { sendJson(res,errorStatus(error),{error:error?.publicMessage||"The provider request failed. Check server configuration and try again."}); }
+      if (inviteMatch) { const code=validateInviteCode(inviteMatch[1]); sendJson(res,200,await getDiscordInvite(code),limitHeaders); return; }
+      sendJson(res,404,{error:"API route not found."},limitHeaders);
+    } catch (error) { sendJson(res,errorStatus(error),{error:error?.publicMessage||"The provider request failed. Check server configuration and try again."},limitHeaders); }
     return;
   }
   let requested;
