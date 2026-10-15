@@ -1,8 +1,8 @@
 {
   "name": "discordhub",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
-  "description": "Community discovery starter for Google Search, GitHub, and Discord.",
+  "description": "Community discovery platform for GitHub, Google Search, Discord, favorites, and optional AI.",
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -13,6 +13,11 @@
     "dev": "node --watch server/index.js",
     "test": "node --test",
     "check:env": "node scripts/check-env.js",
-    "doctor": "node scripts/doctor.js"
+    "doctor": "node scripts/doctor.js",
+    "check:syntax": "node --check server/index.js && node --check server/auth.js && node --check server/ai.js",
+    "security:deps": "npm audit --omit=dev"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
   }
 }
