@@ -1,0 +1,8 @@
+-- Platform tables. Apply after 001_initial_schema.sql.
+CREATE TABLE IF NOT EXISTS users(id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,email TEXT NOT NULL UNIQUE,password_hash TEXT NOT NULL,role TEXT NOT NULL DEFAULT 'user' CHECK(role IN ('user','admin')),created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,CHECK(length(email)<=254));
+CREATE TABLE IF NOT EXISTS auth_sessions(id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,token_hash TEXT NOT NULL UNIQUE,csrf_token TEXT NOT NULL,user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,expires_at TIMESTAMPTZ NOT NULL);
+CREATE INDEX IF NOT EXISTS auth_sessions_expiry_idx ON auth_sessions(expires_at);
+CREATE TABLE IF NOT EXISTS favorites(id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,provider TEXT NOT NULL CHECK(provider IN ('github','google','discord')),title TEXT NOT NULL,url TEXT NOT NULL,description TEXT NOT NULL DEFAULT '',created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,UNIQUE(user_id,url),CHECK(length(title)<=300),CHECK(length(url)<=2048),CHECK(length(description)<=5000));
+CREATE INDEX IF NOT EXISTS favorites_user_created_idx ON favorites(user_id,created_at DESC);
+CREATE TABLE IF NOT EXISTS audit_events(id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,actor_user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,event_type TEXT NOT NULL,metadata JSONB NOT NULL DEFAULT '{}'::jsonb,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE INDEX IF NOT EXISTS audit_events_created_idx ON audit_events(created_at DESC);
