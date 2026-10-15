@@ -1,0 +1,11 @@
+{
+  "name": "discordhub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Community discovery starter for Google Search, GitHub, and Discord.",
+  "type": "module",
+  "scripts": {
+    "setup": "node setup-discordhub.js",
+    "test": "node --test"
+  }
+}
