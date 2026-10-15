@@ -1,22 +1,43 @@
-# Admin webapp
+# DiscordHub Admin Webapp
 
-This folder contains a PHP-based, admin-only starter page.
+This folder contains the PHP admin sign-in page and responsive starter dashboard.
+
+## Dashboard pages
+
+- **Overview** — session status, integration configuration count, and quick links
+- **Integrations** — shows whether expected server environment variables are present; it never displays secret values
+- **Settings** — deployment and security reminders
+- **Sign out** — ends the authenticated session
+
+## Security features in this starter
+
+- Admin access stays disabled unless `ADMIN_PASSWORD_HASH` is set to a valid PHP password hash on the server
+- Password verification with PHP's `password_verify()`
+- CSRF tokens for login and sign-out forms
+- Session ID regeneration after successful login
+- HttpOnly and SameSite session cookies (Secure when HTTPS is detected)
+- Automatic sign-out after 30 minutes of inactivity
+- Basic login-attempt throttling within the current session
+- Security response headers and escaped output
+- Secret-safe integration status checks
+
+**Important:** Session-scoped throttling is not production-grade rate limiting. Add host or reverse-proxy rate limiting before public deployment.
 
 ## Requirements
 
 - PHP 8.1+ with sessions enabled
-- HTTPS in deployment
-- A server-side `ADMIN_PASSWORD_HASH` environment variable
+- A PHP-capable web server
+- HTTPS in production
 
 ## Configure admin access
 
-Generate a password hash on a trusted machine with PHP:
+Generate a password hash on a trusted machine:
 
 ```bash
-php -r "echo password_hash('replace-with-a-long-unique-password', PASSWORD_DEFAULT), PHP_EOL;"
+php -r "echo password_hash('use-a-long-unique-password', PASSWORD_DEFAULT), PHP_EOL;"
 ```
 
-Set the resulting hash as `ADMIN_PASSWORD_HASH` in your PHP hosting environment. Do not commit real passwords, hashes, or other secrets. If the variable is unset, the page intentionally denies access.
+Set the resulting hash as the server environment variable `ADMIN_PASSWORD_HASH`. Do not put the password or hash in source control. If the variable is missing or invalid, sign-in stays disabled.
 
 ## Run locally
 
@@ -26,12 +47,29 @@ From the repository root:
 php -S 127.0.0.1:8080 -t webapp
 ```
 
-Open http://127.0.0.1:8080. This PHP built-in server is for local development only; do not expose it directly to the public internet.
+Open http://127.0.0.1:8080. The PHP built-in server is for local development only; do not expose it directly to the public internet.
 
-## Security notes
+## Environment variables checked by the dashboard
 
-- Deploy only behind HTTPS.
-- Add hosting-level rate limiting and monitoring before production.
-- Use secure session cookie settings in the web server/PHP configuration.
-- Keep the admin page on a server that executes PHP; static hosting such as GitHub Pages will not execute `index.php`.
-- The signed-in page is only a placeholder; protect every future admin API route independently.
+- `ADMIN_PASSWORD_HASH` (required for login)
+- `GOOGLE_SEARCH_API_KEY` and `GOOGLE_SEARCH_ENGINE_ID`
+- `DISCORD_BOT_TOKEN` and `DISCORD_CLIENT_ID`
+- `GITHUB_TOKEN`
+- `DATABASE_URL`
+
+The dashboard only checks whether integration variables are present. It does not validate credentials or connect to those services yet.
+
+## Files
+
+- `index.php` — login, session handling, routing, and dashboard markup
+- `assets/admin.css` — responsive dashboard styling
+- `.htaccess` — disables directory listing on Apache-compatible hosts
+
+## Production hardening still needed
+
+- Configure rate limiting at the web server or reverse proxy.
+- Configure trusted proxy handling deliberately if TLS terminates before PHP; do not blindly trust client-supplied forwarding headers.
+- Use secure session cookie settings and HTTPS.
+- Add authorization checks to every future admin endpoint; protecting this page does not automatically protect other files.
+- Add audit logging, backup/restore procedures, and application-specific admin permissions before adding sensitive features.
+- Deploy on a PHP-capable server. Static hosting such as GitHub Pages cannot execute PHP.
