@@ -1,11 +1,17 @@
 {
   "name": "discordhub",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Community discovery starter for Google Search, GitHub, and Discord.",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "setup": "node setup-discordhub.js",
-    "test": "node --test"
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node --test",
+    "check:env": "node scripts/check-env.js"
   }
 }
