@@ -29,7 +29,9 @@ const directories = [
   "docs",
   "scripts",
   ".github/workflows",
-  ".vscode"
+  ".vscode",
+  "webapp",
+  "webapp/assets"
 ];
 
 const placeholders = [
