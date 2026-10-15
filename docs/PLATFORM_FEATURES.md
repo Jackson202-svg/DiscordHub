@@ -1,17 +1,18 @@
 # Advanced platform status
 
 ## Implemented in source
-- PostgreSQL schema/migration for accounts, sessions, favorites, and audit events.
+- PostgreSQL migration for accounts, sessions, favorites, and audit events.
 - Optional PostgreSQL pool using `pg` and `DATABASE_URL`.
-- Scrypt password hashes, server-side sessions, hashed session tokens, and CSRF validation.
-- API routes for registration, login, current session, logout, favorites, one-time admin bootstrap, admin metrics, and optional AI summaries.
-- Optional OpenAI-compatible AI adapter with server-side credentials, request timeouts, bounded input, and safe error messages.
-- Unit tests for auth helpers and AI configuration handling; CI syntax and unit test commands.
+- Scrypt password hashes, random server-side sessions, hashed session tokens, and CSRF checks.
+- Browser UI for account registration/login, account favorites, deletion, and optional AI summaries.
+- API routes for registration, login, current session, logout, favorites, one-time admin bootstrap, admin metrics, and AI summaries.
+- OpenAI-compatible AI adapter with server-side credentials and request timeouts.
+- Auth helper tests, AI configuration test, and GitHub Actions CI for syntax/tests.
 
-## Requires setup
-Install dependencies, configure `DATABASE_URL`, apply migrations `001_initial_schema.sql` then `002_platform.sql`, and configure AI credentials to enable summaries.
+## Requires configuration
+Run `npm install`, set `DATABASE_URL`, and apply migrations `001_initial_schema.sql` then `002_platform.sql`. Configure AI credentials to enable summaries.
 
-Register the intended account, temporarily set a long random `ADMIN_BOOTSTRAP_TOKEN`, call `POST /api/admin/bootstrap` with `Authorization: Bearer <token>` and the existing account email in JSON, then remove the token immediately. Bootstrap is refused if an admin already exists.
+To bootstrap the first admin, register the intended account, temporarily set a long random `ADMIN_BOOTSTRAP_TOKEN`, call `POST /api/admin/bootstrap` with a Bearer token and the existing account email, then remove the token immediately.
 
 ## Still planned
-Email verification, password reset, MFA, OAuth, distributed rate limiting, automatic migrations, complete admin UI, AI quotas, and end-to-end tests. The PHP dashboard remains separate from the Node API. This starter is not fully audited for production use.
+Email verification, password reset, MFA, OAuth, distributed rate limiting, automated migrations, a full admin management UI, AI usage quotas, and end-to-end tests are not implemented. The PHP dashboard remains separate from the Node API. This starter has not undergone a full production security audit.
