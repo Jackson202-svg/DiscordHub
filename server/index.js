@@ -11,11 +11,14 @@ import { config } from "./config.js";
 const root = resolve(fileURLToPath(new URL("../public/", import.meta.url)));
 const types = { ".html":"text/html; charset=utf-8", ".css":"text/css; charset=utf-8", ".js":"text/javascript; charset=utf-8", ".svg":"image/svg+xml", ".png":"image/png", ".ico":"image/x-icon" };
 const sendJson = (res, status, payload) => { res.writeHead(status, { "content-type":"application/json; charset=utf-8", "cache-control":"no-store", "x-content-type-options":"nosniff" }); res.end(JSON.stringify(payload)); };
-const readJsonError = error => error?.statusCode === 429 ? 429 : error?.statusCode === 401 ? 503 : 502;
+const errorStatus = error => {
+  if (Number.isInteger(error?.statusCode) && [400,401,403,404,429,503].includes(error.statusCode)) return error.statusCode;
+  return 502;
+};
 
 const server = createServer(async (req, res) => {
   const origin = req.headers.origin;
-  if (origin) { res.writeHead(403, {"content-type":"application/json"}); res.end(JSON.stringify({error:"Cross-origin requests are not supported."})); return; }
+  if (origin) { sendJson(res,403,{error:"Cross-origin requests are not supported."}); return; }
   let url;
   try { url = new URL(req.url, "http://localhost"); } catch { sendJson(res,400,{error:"Invalid URL."}); return; }
   if (req.method !== "GET" && req.method !== "HEAD") { sendJson(res,405,{error:"Method not allowed."}); return; }
@@ -27,10 +30,12 @@ const server = createServer(async (req, res) => {
       const inviteMatch=url.pathname.match(/^\/api\/discord\/invite\/([A-Za-z0-9-]{2,64})$/);
       if (inviteMatch) { const code=validateInviteCode(inviteMatch[1]); sendJson(res,200,await getDiscordInvite(code)); return; }
       sendJson(res,404,{error:"API route not found."});
-    } catch (error) { sendJson(res,readJsonError(error),{error:error?.publicMessage||"The provider request failed. Check server configuration and try again."}); }
+    } catch (error) { sendJson(res,errorStatus(error),{error:error?.publicMessage||"The provider request failed. Check server configuration and try again."}); }
     return;
   }
-  const requested = url.pathname === "/" ? "index.html" : decodeURIComponent(url.pathname).replace(/^\/+/, "");
+  let requested;
+  try { requested = url.pathname === "/" ? "index.html" : decodeURIComponent(url.pathname).replace(/^\/+/, ""); }
+  catch { sendJson(res,400,{error:"Invalid path."}); return; }
   const file = resolve(root, requested);
   if (file !== root && !file.startsWith(root + sep)) { sendJson(res,403,{error:"Forbidden."}); return; }
   try {
