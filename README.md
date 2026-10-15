@@ -1,70 +1,62 @@
 # DiscordHub
 
-DiscordHub is a community-discovery starter project designed to bring together **Google Search**, **GitHub**, and **Discord** discovery in one app.
+DiscordHub is a community-discovery starter that brings public GitHub repository search, Google Custom Search (when configured), and Discord invite lookup into one responsive web app.
 
-> This repository is a starter scaffold, not a finished production service. API integrations, authentication, persistence, and moderation workflows must be implemented and configured before deployment.
+> This is an extensible starter project, not a finished production service. Database persistence, user accounts, saved items, AI features, and a full Discord server search are not implemented yet.
 
-## Goals
+## What works now
 
-- Search and discover Discord communities and related resources.
-- Explore GitHub repositories and developer projects.
-- Provide a single, mobile-friendly discovery interface.
-- Keep secrets in local environment variables, never in source control.
-- Grow through small, clearly separated modules and tests.
+- Responsive browser UI in `public/`
+- Node.js HTTP server and JSON API in `server/`
+- GitHub public repository search via the official GitHub API
+- Optional Google Custom Search JSON API adapter
+- Discord invite lookup for a supplied invite code
+- Input validation, provider request timeouts, safe DOM text rendering, and basic security headers
+- Automated validation tests with Node's built-in test runner
+- Separate PHP admin starter dashboard in `webapp/`
 
 ## Project structure
 
 ```text
 DiscordHub/
-├── public/                 # Static assets
-├── private/                # Local-only notes/data; ignored by Git
-├── src/
-│   ├── help/                # Help and onboarding content
-│   ├── components/          # Reusable UI components
-│   ├── pages/               # App pages or route views
-│   ├── styles/              # CSS and design tokens
-│   └── utils/               # Shared utilities
-├── google/                  # Google Search integration adapter
-├── discord/                 # Discord discovery/API adapter
-├── github/                  # GitHub discovery/API adapter
-├── ai/                      # Optional AI features
-├── server/                  # Server/API entry points
-├── database/                # Schema and migrations
-├── admin/                   # Admin tools and configuration
-├── integrations/            # Shared integration interfaces
-├── tests/                   # Automated tests
-├── docs/                    # Architecture and setup notes
-├── scripts/                 # Developer scripts
-├── .github/workflows/       # CI workflows
-├── .vscode/                 # Recommended editor settings
-├── .env.example             # Safe environment-variable template
-├── .gitignore
+├── public/                 # Browser UI, CSS, and client JavaScript
+├── server/                 # Node HTTP server and environment configuration
+├── src/utils/              # Input validation helpers
+├── github/                 # GitHub repository search adapter
+├── google/                 # Google Custom Search adapter
+├── discord/                # Discord invite lookup adapter
+├── integrations/           # Shared HTTP client helper
+├── database/               # Initial PostgreSQL schema (not wired up yet)
+├── webapp/                 # Separate PHP admin console
+├── admin/                  # Future Node-side admin services
+├── ai/                     # Future optional AI features
+├── tests/                  # Automated tests
+├── docs/                   # Architecture and setup documentation
+├── scripts/                # Developer utilities
+├── .github/workflows/      # CI test workflow
+├── .env.example            # Safe environment template
 ├── package.json
-└── setup-discordhub.js      # Generates scaffold directories locally
+└── setup-discordhub.js     # Non-destructive scaffold generator
 ```
 
 ## Requirements
 
 - Node.js 20 or newer
 - npm
-- Git (optional, for cloning and version control)
+- Optional Google Custom Search credentials
+- Optional GitHub token for higher API rate limits
+- Optional PHP 8.1+ to run the separate admin console
 
 ## Quick start
 
-1. Clone the repository:
+1. Clone the repository and enter the project directory:
 
    ```bash
    git clone https://github.com/Jackson202-svg/DiscordHub.git
    cd DiscordHub
    ```
 
-2. Install dependencies (currently none are required by the scaffold):
-
-   ```bash
-   npm install
-   ```
-
-3. Copy the environment template and fill in only the credentials you actually use:
+2. Copy the environment template:
 
    macOS/Linux:
    ```bash
@@ -76,30 +68,53 @@ DiscordHub/
    Copy-Item .env.example .env
    ```
 
-4. Generate any missing starter directories:
+3. Start the app:
 
    ```bash
-   npm run setup
+   npm start
    ```
 
-5. Start from the architecture notes in `docs/ARCHITECTURE.md`.
+4. Open http://127.0.0.1:3000.
 
-## Environment variables
+5. Run the test suite:
 
-See `.env.example`. All values are placeholders. Do not commit your real `.env`, access tokens, API keys, or private user data.
+   ```bash
+   npm test
+   ```
 
-## Integrations and safety
+The app uses Node built-in modules, so no third-party npm dependencies are required by the current starter.
 
-- Use official APIs and follow their terms, rate limits, and privacy requirements.
-- Google Search requires a supported API and configured credentials; a normal search page is not a general-purpose API.
-- Discord bot and application features require an application created in the Discord Developer Portal and appropriate permissions.
-- Use GitHub's official API for repository discovery. Never put a personal access token in browser-side code.
-- Validate inputs, apply rate limits, and avoid collecting more user data than needed.
+## Search providers
 
-## Development status
+- **GitHub:** public repository search works without a token, subject to unauthenticated API rate limits. Configure `GITHUB_TOKEN` on the server for authenticated requests.
+- **Google:** configure `GOOGLE_SEARCH_API_KEY` and `GOOGLE_SEARCH_ENGINE_ID`. The integration uses Google Custom Search JSON API; a regular search webpage is not a general-purpose API.
+- **Discord:** paste a specific `discord.gg/code` or `discord.com/invite/code` link. This calls Discord's public invite endpoint. It does not search every Discord server.
 
-This is an initial scaffold. UI, API routes, database access, authentication, and production deployment are not yet implemented.
+All API credentials must stay on the server. Never put real tokens in browser JavaScript or commit a real `.env` file.
+
+## PHP admin console
+
+The admin console is separate from the Node app and requires a PHP-capable server. From the repository root:
+
+```bash
+php -S 127.0.0.1:8080 -t webapp
+```
+
+Open http://127.0.0.1:8080. Configure a valid `ADMIN_PASSWORD_HASH` environment variable on the PHP server before sign-in can work. See [webapp/README.md](webapp/README.md).
+
+GitHub Pages and other static-only hosts cannot execute PHP or run this Node API server.
+
+## API routes
+
+- `GET /api/health` — service status and provider configuration indicators
+- `GET /api/github/search?q=...` — public GitHub repository search
+- `GET /api/google/search?q=...` — Google Custom Search (requires credentials)
+- `GET /api/discord/invite/:code` — lookup a specific Discord invite
+
+## Security and production readiness
+
+Before public deployment, add shared/IP-based rate limiting, structured logging, production hosting configuration, stronger origin policy if cross-origin access is needed, automated dependency/security checks, and a reviewed authentication/authorization model before adding private user data or administrative API routes. The database schema is only a starting point; persistence is not yet connected to the app.
 
 ## License
 
-No license has been selected yet. Until one is added, do not assume others have permission to reuse this project's code.
+No license has been selected. Until a license is added, do not assume others have permission to reuse this project's code.
